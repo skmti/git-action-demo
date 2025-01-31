@@ -13,6 +13,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Set up Java 17 (AdoptOpenJDK)
+        uses: actions/setup-java@v2
+        with:
+          java-version: '17'
+          distribution: 'adoptopenjdk'
+          java-package: jdk
+          architecture: x64
+          check-latest: false
+
       - name: Cache Maven dependencies
         uses: actions/cache@v2
         with:
@@ -31,17 +40,24 @@ jobs:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
           credentials: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Configure Docker for GCR
+      - name: Configure Docker for GCR (or Artifact Registry)
         run: |
+          # Authenticate Docker with Google Cloud Container Registry (GCR)
           gcloud auth configure-docker gcr.io
+
+          # OR authenticate for Artifact Registry (if using it)
+          # gcloud auth configure-docker europe-west1-docker.pkg.dev  # specify appropriate region
 
       - name: Build Docker image
         run: |
           docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/springboot-k8s-app:1.0 .
 
-      - name: Push Docker image to GCR
+      - name: Push Docker image to GCR (or Artifact Registry)
         run: |
           docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/springboot-k8s-app:1.0
+
+          # OR push to Artifact Registry (if using it)
+          # docker push europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/springboot-k8s-app/springboot-k8s-app:1.0
 
       # Manually install kubectl
       - name: Install kubectl
