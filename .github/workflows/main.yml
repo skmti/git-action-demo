@@ -31,30 +31,40 @@ jobs:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
           credentials: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Configure Docker for Artifact Registry (with debug)
+      # Authenticate Docker to GitHub Container Registry
+      - name: Log in to GitHub Container Registry (GHCR)
+        env:
+          USERNAME: ${{ secrets.GITHUB_USERNAME }}  # Your GitHub username
+          PASSWORD: ${{ secrets.GITHUB_PASSWORD }}  # Your PAT (Personal Access Token)
         run: |
-          gcloud auth configure-docker us-docker.pkg.dev --verbosity debug
+          echo $GITHUB_PASSWORD | docker login ghcr.io -u $GITHUB_USERNAME --password-stdin
 
+      # Build Docker image
       - name: Build Docker image
         run: |
-          docker build -t us-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/springboot-k8s-app/springboot-k8s-app:1.0 .
+          IMAGE_NAME=ghcr.io/${{ github.repository }}/springboot-k8s-app:1.0
+          docker build -t $IMAGE_NAME .
 
-      - name: Push Docker image to Artifact Registry (with debug)
+      # Push Docker image to GHCR
+      - name: Push Docker image to GHCR
         run: |
-          docker --log-level debug push us-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/springboot-k8s-app/springboot-k8s-app:1.0
+          docker push $IMAGE_NAME
 
+      # Install kubectl for GKE deployment
       - name: Install kubectl
         run: |
           curl -LO https://dl.k8s.io/release/v1.27.0/bin/linux/amd64/kubectl
           chmod +x ./kubectl
           sudo mv ./kubectl /usr/local/bin/kubectl
 
+      # Get GKE credentials
       - name: Get GKE credentials
         run: |
           gcloud container clusters get-credentials ${{ secrets.GKE_CLUSTER_NAME }} \
           --zone ${{ secrets.GKE_CLUSTER_ZONE }} \
           --project ${{ secrets.GCP_PROJECT_ID }}
 
+      # Deploy to GKE using kubectl
       - name: Deploy to GKE
         run: |
           kubectl apply -f kubernetes/deployment.yaml
