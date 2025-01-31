@@ -69,7 +69,12 @@ jobs:
           --zone us-central1-a \
           --project ${{ secrets.GCP_PROJECT_ID }}
 
+      - name: Replace image tag in deployment.yaml
+        run: |
+          IMAGE_TAG="springboot-k8s-app-${{ github.sha }}"
+          sed -i "s|gcr.io/${{ secrets.GCP_PROJECT_ID }}/springboot-k8s-app:.*|gcr.io/${{ secrets.GCP_PROJECT_ID }}/springboot-k8s-app:${IMAGE_TAG}|" kubernetes/deployment.yaml
+
       - name: Deploy to GKE
         run: |
-          kubectl apply -f deployment.yaml
-          kubectl apply -f service.yaml
+          kubectl apply -f kubernetes/deployment.yaml
+          kubectl apply -f kubernetes/service.yaml
