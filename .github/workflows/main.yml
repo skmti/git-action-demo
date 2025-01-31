@@ -69,10 +69,10 @@ jobs:
           --zone us-central1-a \
           --project ${{ secrets.GCP_PROJECT_ID }}
 
-      - name: Replace image tag in deployment.yaml
+      - name: Update image in deployment.yaml using yq
         run: |
-          IMAGE_TAG="springboot-k8s-app-${{ github.sha }}"
-          sed -i "s|gcr.io/${{ secrets.GCP_PROJECT_ID }}/springboot-k8s-app:.*|gcr.io/${{ secrets.GCP_PROJECT_ID }}/springboot-k8s-app:${IMAGE_TAG}|" deployment.yaml
+          echo "Updating image in deployment.yaml to $IMAGE_NAME"
+          yq e '.spec.template.spec.containers[0].image = env(IMAGE_NAME)' -i deployment.yaml
 
       - name: Deploy to GKE
         run: |
