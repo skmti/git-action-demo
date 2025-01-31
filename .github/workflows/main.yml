@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       REGION: us
-      IMAGE_NAME: us-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/springboot-k8s-app/springboot-k8s-app:1.0
+      IMAGE_NAME: us-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/gcr.io/springboot-k8s-app:1.0
 
     steps:
       - name: Checkout code
