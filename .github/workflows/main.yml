@@ -1,67 +1,47 @@
-name: Deploy to GKE with Docker Compose
-
-on:
-  push:
-    branches:
-      - main
-
 jobs:
   build-push-deploy:
     runs-on: ubuntu-latest
     env:
-      REGION: us  # Specify your Artifact Registry region
+      REGION: us
       IMAGE_NAME: us-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/springboot-k8s-app/springboot-k8s-app:1.0
 
     steps:
-      # Checkout the code from the repository
-      - name: "Checkout code"
+      - name: Checkout code
         uses: actions/checkout@v2
 
-      # Authenticate with Google Cloud using Service Account Key
-      - name: "Authenticate with Google Cloud"
-        uses: "google-github-actions/auth@v1"
+      - name: Authenticate with Google Cloud using Service Account Key
+        uses: google-github-actions/auth@v1
         with:
-          credentials_json: "${{ secrets.SERVICE_ACCOUNT_KEY }}"
+          credentials_json: "${{ secrets.SERVICE_ACCOUNT_KEY }}"  # Make sure this secret is correctly set up
 
-      # Set up Cloud SDK for interacting with Google Cloud resources
-      - name: "Set up Cloud SDK"
-        uses: "google-github-actions/setup-gcloud@v1"
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
 
-      # Docker Authentication to Google Artifact Registry
-      - name: "Docker auth"
+      - name: Docker auth
         run: |
           gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
 
-      # Install Docker Compose if it's not already available
-      - name: "Install Docker Compose"
+      - name: Build Docker image
         run: |
-          curl -L "https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-          chmod +x /usr/local/bin/docker-compose
+          docker build -t $IMAGE_NAME .
 
-      # Build Docker images using Docker Compose
-      - name: "Build images using Docker Compose"
-        run: docker-compose -f docker-compose.yaml build
+      - name: Push Docker image to Artifact Registry
+        run: |
+          docker push $IMAGE_NAME
 
-      # Push the built Docker images to Google Artifact Registry
-      - name: "Push images using Docker Compose"
-        run: docker-compose -f docker-compose.yaml push
-
-      # Install kubectl to interact with Google Kubernetes Engine
-      - name: "Install kubectl"
+      - name: Install kubectl
         run: |
           curl -LO https://dl.k8s.io/release/v1.27.0/bin/linux/amd64/kubectl
           chmod +x ./kubectl
           sudo mv ./kubectl /usr/local/bin/kubectl
 
-      # Get GKE credentials using gcloud
-      - name: "Get GKE credentials"
+      - name: Get GKE credentials
         run: |
           gcloud container clusters get-credentials ${{ secrets.GKE_CLUSTER_NAME }} \
             --zone ${{ secrets.GKE_CLUSTER_ZONE }} \
             --project ${{ secrets.GCP_PROJECT_ID }}
 
-      # Deploy to GKE using kubectl
-      - name: "Deploy to GKE"
+      - name: Deploy to GKE
         run: |
           kubectl apply -f kubernetes/deployment.yaml
           kubectl apply -f kubernetes/service.yaml
