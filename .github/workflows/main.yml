@@ -13,6 +13,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+
       - name: Cache Maven dependencies
         uses: actions/cache@v2
         with:
@@ -31,26 +32,18 @@ jobs:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
           credentials: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Configure Docker for GCR (or Artifact Registry)
+      - name: Configure Docker for Artifact Registry
         run: |
-          # Authenticate Docker with Google Cloud Container Registry (GCR)
-          gcloud auth configure-docker gcr.io
-
-          # OR authenticate for Artifact Registry (if using it)
-          # gcloud auth configure-docker europe-west1-docker.pkg.dev  # specify appropriate region
+          gcloud auth configure-docker us-docker.pkg.dev  # Adjust for the region your registry is hosted in
 
       - name: Build Docker image
         run: |
-          docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/springboot-k8s-app:1.0 .
+          docker build -t us-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/springboot-k8s-app/springboot-k8s-app:1.0 .
 
-      - name: Push Docker image to GCR (or Artifact Registry)
+      - name: Push Docker image to Artifact Registry
         run: |
-          docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/springboot-k8s-app:1.0
+          docker push us-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/springboot-k8s-app/springboot-k8s-app:1.0
 
-          # OR push to Artifact Registry (if using it)
-          # docker push europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/springboot-k8s-app/springboot-k8s-app:1.0
-
-      # Manually install kubectl
       - name: Install kubectl
         run: |
           curl -LO https://dl.k8s.io/release/v1.27.0/bin/linux/amd64/kubectl
