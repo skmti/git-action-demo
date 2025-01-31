@@ -1,4 +1,4 @@
-name: Deploy to GKE
+Deploy to GKE
 
 on:
   push:
@@ -10,7 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       REGION: us
-      IMAGE_NAME: us-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/gcr.io/springboot-k8s-app:springboot-k8s-app-${{ github.sha }}
+      IMAGE_TAG: springboot-k8s-app-${{ github.sha }}
+      IMAGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID | lower }}/springboot-k8s-app:${{ env.IMAGE_TAG }}
 
     steps:
       - name: Checkout code
@@ -27,11 +28,6 @@ jobs:
       - name: Build with Maven (skip tests)
         run: |
           mvn clean package -DskipTests
-
-      # List files in target directory for debugging
-      - name: List files in target folder
-        run: |
-          ls -al target
 
       - name: Authenticate with Google Cloud using Service Account Key
         uses: google-github-actions/auth@v1
@@ -51,28 +47,18 @@ jobs:
 
       - name: Build Docker image
         run: |
+          echo "Building Docker image: $IMAGE_NAME"
           docker build -t $IMAGE_NAME .
 
       - name: Push Docker image to Artifact Registry
         run: |
+          echo "Pushing Docker image: $IMAGE_NAME"
           docker push $IMAGE_NAME
 
-      - name: Install kubectl
+      - name: Update image in deployment.yaml
         run: |
-          curl -LO https://dl.k8s.io/release/v1.27.0/bin/linux/amd64/kubectl
-          chmod +x ./kubectl
-          sudo mv ./kubectl /usr/local/bin/kubectl
-
-      - name: Get GKE credentials
-        run: |
-          gcloud container clusters get-credentials ${{ secrets.GKE_CLUSTER_NAME }} \
-          --zone us-central1-a \
-          --project ${{ secrets.GCP_PROJECT_ID }}
-
-      - name: Replace image tag in deployment.yaml
-        run: |
-          IMAGE_TAG="springboot-k8s-app-${{ github.sha }}"
-          sed -i "s|gcr.io/${{ secrets.GCP_PROJECT_ID }}/springboot-k8s-app:.*|gcr.io/${{ secrets.GCP_PROJECT_ID }}/springboot-k8s-app:${IMAGE_TAG}|" deployment.yaml
+          echo "Updating image in deployment.yaml to $IMAGE_NAME"
+          sed -i "s|gcr.io/${{ secrets.GCP_PROJECT_ID }}/springboot-k8s-app:.*|$IMAGE_NAME|" deployment.yaml
 
       - name: Deploy to GKE
         run: |
