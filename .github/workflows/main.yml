@@ -49,8 +49,12 @@ jobs:
         run: |
           docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/springboot-k8s-app:1.0
 
-      - name: Set up kubectl
-        uses: google-github-actions/setup-kubectl@v2  # Ensure this is the correct version
+      # Manually install kubectl
+      - name: Install kubectl
+        run: |
+          curl -LO https://dl.k8s.io/release/v1.27.0/bin/linux/amd64/kubectl
+          chmod +x ./kubectl
+          sudo mv ./kubectl /usr/local/bin/kubectl
 
       - name: Get GKE credentials
         run: |
