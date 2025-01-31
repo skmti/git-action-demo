@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       REGION: us
-      IMAGE_NAME: us-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/gcr.io/springboot-k8s-app:1.0
+      IMAGE_NAME: us-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/gcr.io/springboot-k8s-app:springboot-k8s-app-${{ github.sha }}
 
     steps:
       - name: Checkout code
@@ -43,7 +43,7 @@ jobs:
         
       - name: Install gke-gcloud-auth-plugin
         run: |
-          gcloud components install gke-gcloud-auth-plugin        
+          gcloud components install gke-gcloud-auth-plugin
 
       - name: Docker auth
         run: |

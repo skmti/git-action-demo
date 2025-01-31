@@ -1,12 +1,12 @@
 apiVersion: apps/v1
-kind: Deployment # Kubernetes resource kind we are creating
+kind: Deployment
 metadata:
   name: spring-boot-k8s
 spec:
   selector:
     matchLabels:
       app: spring-boot-k8s
-  replicas: 2 # Number of replicas that will be created for this deployment
+  replicas: 2
   template:
     metadata:
       labels:
@@ -14,8 +14,7 @@ spec:
     spec:
       containers:
         - name: spring-boot-k8s
-          image: gcr.io/deployment-k8s-gke-demo/springboot-k8s-app:1.1
-          # Image that will be used to containers in the cluster
+          # Use the dynamic IMAGE_NAME set in the GitHub Actions workflow
+          image: gcr.io/${{ secrets.GCP_PROJECT_ID }}/springboot-k8s-app:springboot-k8s-app-${{ github.sha }}
           ports:
             - containerPort: 8080
-# The port that the container is running on in the cluster
