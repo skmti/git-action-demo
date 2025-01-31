@@ -6,11 +6,8 @@ on:
       - main
 
 jobs:
-  build-push-deploy:
+  build:
     runs-on: ubuntu-latest
-    env:
-      REGION: us
-      IMAGE_NAME: us-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/gcr.io/springboot-k8s-app:1.0
 
     steps:
       - name: Checkout code
@@ -28,30 +25,23 @@ jobs:
         run: |
           mvn clean package -DskipTests
 
-      # List files in target directory for debugging
-      - name: List files in target folder
-        run: |
-          ls -al target
-
-      - name: Authenticate with Google Cloud using Service Account Key
-        uses: google-github-actions/auth@v1
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0.6.0
         with:
-          credentials_json: "${{ secrets.GCP_SA_KEY }}"
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          credentials: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
-
-      - name: Docker auth
+      - name: Configure Docker for Artifact Registry (with debug)
         run: |
-          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+          gcloud auth configure-docker us-docker.pkg.dev --verbosity debug
 
       - name: Build Docker image
         run: |
-          docker build -t $IMAGE_NAME .
+          docker build -t us-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/springboot-k8s-app/springboot-k8s-app:1.0 .
 
-      - name: Push Docker image to Artifact Registry
+      - name: Push Docker image to Artifact Registry (with debug)
         run: |
-          docker push $IMAGE_NAME
+          docker --log-level debug push us-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/springboot-k8s-app/springboot-k8s-app:1.0
 
       - name: Install kubectl
         run: |
@@ -62,8 +52,8 @@ jobs:
       - name: Get GKE credentials
         run: |
           gcloud container clusters get-credentials ${{ secrets.GKE_CLUSTER_NAME }} \
-            --zone ${{ secrets.GKE_CLUSTER_ZONE }} \
-            --project ${{ secrets.GCP_PROJECT_ID }}
+          --zone us-central1-a \
+          --project ${{ secrets.GCP_PROJECT_ID }}
 
       - name: Deploy to GKE
         run: |
