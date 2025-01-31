@@ -1,3 +1,10 @@
+name: Deploy to GKE
+
+on:
+  push:
+    branches:
+      - main
+
 jobs:
   build-push-deploy:
     runs-on: ubuntu-latest
@@ -12,7 +19,7 @@ jobs:
       - name: Authenticate with Google Cloud using Service Account Key
         uses: google-github-actions/auth@v1
         with:
-          credentials_json: "${{ secrets.SERVICE_ACCOUNT_KEY }}"  # Make sure this secret is correctly set up
+          credentials_json: "${{ secrets.SERVICE_ACCOUNT_KEY }}"  # Ensure this secret is properly set in your GitHub repo
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v1
