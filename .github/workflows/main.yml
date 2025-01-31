@@ -13,14 +13,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up Java 17 (AdoptOpenJDK)
-        uses: actions/setup-java@v2
-        with:
-          java-version: '17'
-          distribution: 'adoptopenjdk'
-          java-package: jdk
-          architecture: x64
-
       - name: Cache Maven dependencies
         uses: actions/cache@v2
         with:
