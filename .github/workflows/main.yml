@@ -13,7 +13,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-
       - name: Cache Maven dependencies
         uses: actions/cache@v2
         with:
@@ -32,31 +31,10 @@ jobs:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
           credentials: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Configure Docker for Artifact Registry
+      - name: Configure Docker for Artifact Registry (with debug)
         run: |
-          gcloud auth configure-docker us-docker.pkg.dev  # Adjust for the region your registry is hosted in
+          gcloud auth configure-docker us-docker.pkg.dev --verbosity debug
 
       - name: Build Docker image
         run: |
-          docker build -t us-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/springboot-k8s-app/springboot-k8s-app:1.0 .
-
-      - name: Push Docker image to Artifact Registry
-        run: |
-          docker push us-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/springboot-k8s-app/springboot-k8s-app:1.0
-
-      - name: Install kubectl
-        run: |
-          curl -LO https://dl.k8s.io/release/v1.27.0/bin/linux/amd64/kubectl
-          chmod +x ./kubectl
-          sudo mv ./kubectl /usr/local/bin/kubectl
-
-      - name: Get GKE credentials
-        run: |
-          gcloud container clusters get-credentials ${{ secrets.GKE_CLUSTER_NAME }} \
-          --zone ${{ secrets.GKE_CLUSTER_ZONE }} \
-          --project ${{ secrets.GCP_PROJECT_ID }}
-
-      - name: Deploy to GKE
-        run: |
-          kubectl apply -f kubernetes/deployment.yaml
-          kubectl apply -f kubernetes/service.yaml
+          docker build -t us-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/springboot-k8s-app/springboot-k8s
