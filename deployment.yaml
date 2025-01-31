@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: spring-boot-k8s
-          image: gcr.io/deployment-k8s-gke-demo/springboot-k8s-app:1.0
+          image: gcr.io/deployment-k8s-gke-demo/springboot-k8s-app:1.1
           # Image that will be used to containers in the cluster
           ports:
             - containerPort: 8080
